@@ -4,11 +4,14 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // const gdi32_lib = b.addSharedLibrary(.{
-    //     .name = "gdi32.dll",
-    //     .target = target,
-    //     .optimize = optimize,
-    // });
+    const memview_lib = b.addStaticLibrary(.{
+        .name = "memview",
+        .root_source_file = .{
+            .path = "lib/memview/main.zig",
+        },
+        .target = target,
+        .optimize = optimize,
+    });
 
     const exe = b.addExecutable(.{
         .name = "doomgeneric",
@@ -19,6 +22,7 @@ pub fn build(b: *std.Build) void {
 
     exe.linkSystemLibrary("gdi32");
     exe.linkLibC();
+    exe.linkLibrary(memview_lib);
     exe.addCSourceFiles(
         &.{
             "doomgeneric/am_map.c",
