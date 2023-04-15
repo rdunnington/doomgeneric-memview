@@ -112,7 +112,10 @@ pub fn build(b: *std.Build) void {
             "doomgeneric/w_wad.c",
             "doomgeneric/z_zone.c",
         },
-        &.{ "-std=c99", "-pedantic", "-Wall", "-Wextra" },
+        &.{
+            "-std=c99",
+            "-fno-sanitize=undefined",
+        },
     );
     exe.install();
 }
