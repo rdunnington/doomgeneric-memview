@@ -5,14 +5,23 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const network_module = b.addModule("network", .{
+        .source_file = .{ .path = "lib/memview/libs/zig-network/network.zig" },
+    });
+    const stable_array_module = b.addModule("stable_array", .{
+        .source_file = .{ .path = "lib/memview/libs/zig-stable-array/stable_array.zig" },
+    });
+
     const memview_lib = b.addStaticLibrary(.{
         .name = "memview",
         .root_source_file = .{
-            .path = "lib/memview/host.zig",
+            .path = "lib/memview/src/host.zig",
         },
         .target = target,
         .optimize = optimize,
     });
+    memview_lib.addModule("network", network_module);
+    memview_lib.addModule("stable_array", stable_array_module);
 
     const exe = b.addExecutable(.{
         .name = "doomgeneric",
@@ -25,9 +34,8 @@ pub fn build(b: *std.Build) void {
         "-fno-sanitize=undefined",
     };
 
-    exe.addIncludePath("lib/memview");
-    // exe.addLibraryPath("lib/memview");
-    // exe.linkSystemLibrary("memview");
+    exe.addIncludePath("lib/memview/src");
+    exe.linkSystemLibrary("ws2_32");
     exe.linkSystemLibrary("gdi32");
     exe.linkLibC();
     exe.linkLibrary(memview_lib);
