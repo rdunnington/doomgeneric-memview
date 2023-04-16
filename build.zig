@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -7,7 +8,7 @@ pub fn build(b: *std.Build) void {
     const memview_lib = b.addStaticLibrary(.{
         .name = "memview",
         .root_source_file = .{
-            .path = "lib/memview/main.zig",
+            .path = "lib/memview/host.zig",
         },
         .target = target,
         .optimize = optimize,
@@ -17,9 +18,16 @@ pub fn build(b: *std.Build) void {
         .name = "doomgeneric",
         .target = target,
         .optimize = optimize,
-        // .root_source_file = .{ .path = "lib/memview/main.zig" },
     });
 
+    const c_compile_opts = [_][]const u8{
+        "-std=c99",
+        "-fno-sanitize=undefined",
+    };
+
+    exe.addIncludePath("lib/memview");
+    // exe.addLibraryPath("lib/memview");
+    // exe.linkSystemLibrary("memview");
     exe.linkSystemLibrary("gdi32");
     exe.linkLibC();
     exe.linkLibrary(memview_lib);
@@ -31,7 +39,7 @@ pub fn build(b: *std.Build) void {
             // "doomgeneric/doomgeneric_sdl.c",
             // "doomgeneric/doomgeneric_soso.c",
             // "doomgeneric/doomgeneric_sosox.c",
-            "doomgeneric/doomgeneric_win.c",
+            // "doomgeneric/doomgeneric_win.c",
             // "doomgeneric/doomgeneric_xlib.c",
             "doomgeneric/doomstat.c",
             "doomgeneric/dstrings.c",
@@ -116,10 +124,20 @@ pub fn build(b: *std.Build) void {
             "doomgeneric/w_wad.c",
             "doomgeneric/z_zone.c",
         },
-        &.{
-            "-std=c99",
-            "-fno-sanitize=undefined",
-        },
+        &c_compile_opts,
     );
+
+    const target_os = if (target.os_tag) |tag| tag else builtin.os.tag;
+
+    if (target_os == .windows) {
+        exe.addCSourceFiles(&.{"doomgeneric/doomgeneric_win.c"}, &c_compile_opts);
+    } else {
+        exe.addCSourceFiles(&.{
+            "doomgeneric/doomgeneric_sdl.c",
+            "doomgeneric/i_sdlmusic.c",
+            "doomgeneric/i_sdlsound.c",
+        }, &c_compile_opts);
+    }
+
     exe.install();
 }
