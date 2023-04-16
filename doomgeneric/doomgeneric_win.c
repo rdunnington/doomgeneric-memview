@@ -6,6 +6,8 @@
 
 #include <Windows.h>
 
+#include "memview.h"
+
 static BITMAPINFO s_Bmi = { sizeof(BITMAPINFOHEADER), DOOMGENERIC_RESX, -DOOMGENERIC_RESY, 1, 32 };
 static HWND s_Hwnd = 0;
 static HDC s_Hdc = 0;
@@ -198,13 +200,31 @@ void DG_SetWindowTitle(const char * title)
 
 int main(int argc, char **argv)
 {
+	// memview init
+	{
+		uint64_t bytes_for_stacktrace = 1024 * 1024 * 2;
+		uint64_t bytes_for_other_buffers = 1024 * 1024 * 2;
+		uint64_t memview_buffer_size = memview_calc_min_required_memory(bytes_for_stacktrace) + bytes_for_other_buffers;
+		char* buffer = malloc(memview_buffer_size);
+		if (memview_init(buffer, memview_buffer_size, bytes_for_stacktrace)) {
+			printf("memview init successful\n");
+		} else {
+			printf("memview init failed\n");
+		}
+		memview_wait_for_connection();
+	}
+
     doomgeneric_Create(argc, argv);
 
     for (int i = 0; ; i++)
     {
+        memview_msg_frame();
+        memview_pump_message_queue();
         doomgeneric_Tick();
     }
     
+
+    memview_deinit();
 
     return 0;
 }

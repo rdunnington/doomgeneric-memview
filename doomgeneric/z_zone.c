@@ -21,6 +21,8 @@
 #include "i_system.h"
 #include "doomtype.h"
 
+#include "memview.h"
+
 
 //
 // ZONE MEMORY ALLOCATION
@@ -170,6 +172,8 @@ void Z_Free (void* ptr)
         if (other == mainzone->rover)
             mainzone->rover = block;
     }
+
+    memview_msg_free((uint64_t)block);
 }
 
 
@@ -285,6 +289,13 @@ Z_Malloc
     mainzone->rover = base->next;	
 	
     base->id = ZONEID;
+
+    if (size > 0)
+    {
+        uint64_t usize = (uint64_t)size;
+        uint64_t ubase = (uint64_t)base;
+        memview_msg_alloc(ubase, usize, 0);
+    }
     
     return result;
 }
