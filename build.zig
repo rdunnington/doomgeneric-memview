@@ -29,14 +29,30 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const c_compile_opts = [_][]const u8{
+    const target_os = if (target.os_tag) |tag| tag else builtin.os.tag;
+    const is_windows = target_os == .windows;
+
+    const c_compile_opts_windows = [_][]const u8{
         "-std=c99",
         "-fno-sanitize=undefined",
+        "",
+        "",
     };
+    const c_compile_opts_other = [_][]const u8{
+        "-std=c99",
+        "-fno-sanitize=undefined",
+        "-D_BSD_SOURCE 1",
+        "-w",
+    };
+    const c_compile_opts = if (is_windows) c_compile_opts_windows else c_compile_opts_other;
 
     exe.addIncludePath("lib/memview/src");
-    exe.linkSystemLibrary("ws2_32");
-    exe.linkSystemLibrary("gdi32");
+    if (is_windows) {
+        exe.linkSystemLibrary("ws2_32");
+        exe.linkSystemLibrary("gdi32");
+    } else {
+        exe.linkSystemLibrary("sdl2");
+    }
     exe.linkLibC();
     exe.linkLibrary(memview_lib);
     exe.addCSourceFiles(
@@ -135,17 +151,15 @@ pub fn build(b: *std.Build) void {
         &c_compile_opts,
     );
 
-    const target_os = if (target.os_tag) |tag| tag else builtin.os.tag;
-
-    if (target_os == .windows) {
+    if (is_windows) {
         exe.addCSourceFiles(&.{"doomgeneric/doomgeneric_win.c"}, &c_compile_opts);
     } else {
         exe.addCSourceFiles(&.{
             "doomgeneric/doomgeneric_sdl.c",
-            "doomgeneric/i_sdlmusic.c",
-            "doomgeneric/i_sdlsound.c",
+            // "doomgeneric/i_sdlmusic.c",
+            // "doomgeneric/i_sdlsound.c",
         }, &c_compile_opts);
     }
 
-    exe.install();
+    b.installArtifact(exe);
 }
