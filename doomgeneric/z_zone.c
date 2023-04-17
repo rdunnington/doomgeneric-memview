@@ -309,7 +309,7 @@ Z_Malloc
         uint64_t tag_string_id = 0;
         if (tag < PU_NUM_TAGS)
         {
-            const index = tag - 1;
+            const int index = tag - 1;
             if (s_tag_to_string_id[index] == 0)
             {
                 const char* tag_name = s_tag_to_name[index];
