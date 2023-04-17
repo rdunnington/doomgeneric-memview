@@ -223,7 +223,6 @@ int main(int argc, char **argv)
         doomgeneric_Tick();
     }
     
-
     memview_deinit();
 
     return 0;
