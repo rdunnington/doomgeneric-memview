@@ -21,7 +21,8 @@
 #include "i_system.h"
 #include "doomtype.h"
 
-#include "memview.h"
+#include <string.h>
+#include <memview.h>
 
 
 //
@@ -292,9 +293,34 @@ Z_Malloc
 
     if (size > 0)
     {
+        static uint64_t s_tag_to_string_id[PU_NUM_TAGS] = {0};
+        static const char* s_tag_to_name[PU_NUM_TAGS] = 
+        {
+            "PU_STATIC",
+            "PU_SOUND",
+            "PU_MUSIC",
+            "PU_FREE",
+            "PU_LEVEL",
+            "PU_LEVSPEC",
+            "PU_PURGELEVEL",
+            "PU_CACHE",
+        };
+
+        uint64_t tag_string_id = 0;
+        if (tag < PU_NUM_TAGS)
+        {
+            const index = tag - 1;
+            if (s_tag_to_string_id[index] == 0)
+            {
+                const char* tag_name = s_tag_to_name[index];
+                s_tag_to_string_id[index] = memview_msg_stringid((const uint8_t*)tag_name, strlen(tag_name));
+            }
+            tag_string_id = s_tag_to_string_id[index];
+        }
+
         uint64_t usize = (uint64_t)size;
         uint64_t ubase = (uint64_t)base;
-        memview_msg_alloc(ubase, usize, 0);
+        memview_msg_alloc(ubase, usize, tag_string_id);
     }
     
     return result;
